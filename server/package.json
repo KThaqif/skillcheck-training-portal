@@ -1,0 +1,31 @@
+{
+  "name": "skillcheck-training-portal-server",
+  "version": "1.0.0",
+  "description": "Backend API for SkillCheck Training Portal",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon --ignore data --ignore uploads --ignore node_modules src/index.js"
+  },
+  "nodemonConfig": {
+    "ignore": [
+      "data/*",
+      "uploads/*",
+      "node_modules/*"
+    ]
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^1.4.5-lts.1",
+    "mysql2": "^3.22.4",
+    "uuid": "^11.0.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.9"
+  }
+}

@@ -1,0 +1,9 @@
+node_modules
+.env
+dist
+build
+uploads
+server/uploads
+client/dist
+npm-debug.log
+.DS_Store

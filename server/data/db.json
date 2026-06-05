@@ -1,0 +1,101 @@
+{
+  "users": [
+    {
+      "id": "e9899973-3a04-413b-927a-0bc9266f0d02",
+      "name": "Admin Trainer",
+      "email": "admin@company.com",
+      "employeeId": "ADM001",
+      "department": "Training Department",
+      "role": "ADMIN",
+      "passwordHash": "$2a$10$tAU4QN.s12qH7lFDFeseOevpbOx4PhHTG6uPEFp5QR6EvkYRdy88y",
+      "createdAt": "2026-06-03T08:00:54.160Z"
+    },
+    {
+      "id": "40dc6ba6-b742-4cb2-a877-2e36d2ec9494",
+      "name": "Employee Demo",
+      "email": "employee@company.com",
+      "employeeId": "EMP001",
+      "department": "IT Department",
+      "role": "EMPLOYEE",
+      "passwordHash": "$2a$10$6UtPnRMKent8e78exUM8c.U1No7mbYsLdoNvjMjXpb5BRMdW1v4Nm",
+      "createdAt": "2026-06-03T08:00:54.227Z"
+    },
+    {
+      "id": "eedbf52e-70b5-4a04-acc2-4e8d49bd8d5b",
+      "name": "HR Manager",
+      "email": "manager@company.com",
+      "employeeId": "MGR001",
+      "department": "Human Resource",
+      "role": "MANAGER",
+      "passwordHash": "$2a$10$su6iW9MmTzhqbZJfkEQrb.VCI86sQJLsWo.O7YtQ6sKCzKHBG6XN.",
+      "createdAt": "2026-06-03T08:00:54.291Z"
+    }
+  ],
+  "topics": [
+    {
+      "id": "dedde45f-837d-451c-80c3-7db8f5e53af5",
+      "title": "Cybersecurity Awareness Training",
+      "category": "IT Security",
+      "description": "Learn how to identify phishing emails, protect passwords, and report suspicious activity.",
+      "thumbnailUrl": "https://images.unsplash.com/photo-1563986768494-4dee2763ff3f?auto=format&fit=crop&w=1000&q=80",
+      "startDate": "2026-06-03",
+      "deadline": "2026-06-30",
+      "status": "LAUNCHED",
+      "launchedAt": "2026-06-03T08:00:54.291Z",
+      "createdAt": "2026-06-03T08:00:54.291Z",
+      "createdBy": "SYSTEM"
+    }
+  ],
+  "videos": [
+    {
+      "id": "67d9fcbb-8d75-4556-8cba-68782adb4f94",
+      "topicId": "dedde45f-837d-451c-80c3-7db8f5e53af5",
+      "title": "Introduction to Cybersecurity",
+      "description": "Sample video. Replace this with your uploaded training video.",
+      "order": 1,
+      "videoUrl": "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
+      "originalName": "sample-training.mp4",
+      "createdAt": "2026-06-03T08:00:54.291Z"
+    }
+  ],
+  "questions": [
+    {
+      "id": "01e58795-7527-445e-a4a7-2cf6ba219d77",
+      "videoId": "67d9fcbb-8d75-4556-8cba-68782adb4f94",
+      "timestamp": 5,
+      "questionText": "What should you do when you receive a suspicious email?",
+      "questionType": "MULTIPLE_CHOICE",
+      "options": [
+        "Click the link quickly",
+        "Ignore company policy",
+        "Report it to IT or security team",
+        "Forward it to everyone"
+      ],
+      "correctAnswer": "Report it to IT or security team",
+      "createdAt": "2026-06-03T08:00:54.291Z"
+    }
+  ],
+  "answers": [
+    {
+      "id": "58c33975-095f-4bb5-9220-0476aecc2fa9",
+      "userId": "40dc6ba6-b742-4cb2-a877-2e36d2ec9494",
+      "questionId": "01e58795-7527-445e-a4a7-2cf6ba219d77",
+      "selectedAnswer": "Click the link quickly",
+      "isCorrect": false,
+      "createdAt": "2026-06-03T08:33:11.164Z"
+    }
+  ],
+  "progress": [
+    {
+      "id": "a1879484-3225-4722-8823-6d9d807fb28d",
+      "userId": "40dc6ba6-b742-4cb2-a877-2e36d2ec9494",
+      "topicId": "dedde45f-837d-451c-80c3-7db8f5e53af5",
+      "videoId": "67d9fcbb-8d75-4556-8cba-68782adb4f94",
+      "watchedSeconds": 5,
+      "completed": true,
+      "createdAt": "2026-06-03T08:33:04.373Z",
+      "updatedAt": "2026-06-03T08:33:43.580Z"
+    }
+  ],
+  "announcements": []
+}
