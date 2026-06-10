@@ -5,8 +5,14 @@ import { mapUser, query } from '../db.js';
 import { requireAuth, requireRole } from '../middleware/auth.js';
 
 const router = express.Router();
+const passwordHashRounds = 10;
+const allowedEmployeeRoles = new Set(['ADMIN', 'EMPLOYEE', 'MANAGER']);
 
-router.get('/reports', requireAuth, requireRole('ADMIN', 'MANAGER'), async (req, res, next) => {
+function isValidEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+router.get('/reports', requireAuth, requireRole('ADMIN'), async (req, res, next) => {
   try {
     const employees = await query("SELECT * FROM users WHERE role = 'EMPLOYEE' ORDER BY name ASC");
     const topics = await query("SELECT * FROM topics WHERE status = 'LAUNCHED' ORDER BY created_at DESC");
@@ -73,10 +79,27 @@ router.get('/reports', requireAuth, requireRole('ADMIN', 'MANAGER'), async (req,
 
 router.post('/employees', requireAuth, requireRole('ADMIN'), async (req, res, next) => {
   try {
-    const { name, email, employeeId, department, password, role } = req.body;
+    const name = req.body?.name?.trim();
+    const email = req.body?.email?.trim().toLowerCase();
+    const employeeId = req.body?.employeeId?.trim();
+    const department = req.body?.department?.trim();
+    const role = String(req.body?.role || 'EMPLOYEE').trim().toUpperCase();
+    const { password } = req.body || {};
 
     if (!name || !email || !employeeId || !department || !password) {
       return res.status(400).json({ message: 'Name, email, employee ID, department, and password are required.' });
+    }
+
+    if (!isValidEmail(email)) {
+      return res.status(400).json({ message: 'Please enter a valid email address.' });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ message: 'Password must be at least 6 characters.' });
+    }
+
+    if (!allowedEmployeeRoles.has(role)) {
+      return res.status(400).json({ message: 'Role must be ADMIN, EMPLOYEE, or MANAGER.' });
     }
 
     const existingRows = await query(
@@ -94,13 +117,14 @@ router.post('/employees', requireAuth, requireRole('ADMIN'), async (req, res, ne
       email,
       employeeId,
       department,
-      role: role || 'EMPLOYEE'
+      role
     };
 
+    const passwordHash = await bcrypt.hash(password, passwordHashRounds);
     await query(
       `INSERT INTO users (id, name, email, password, role, department, employee_id)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [user.id, user.name, user.email, bcrypt.hashSync(password, 10), user.role, user.department, user.employeeId]
+      [user.id, user.name, user.email, passwordHash, user.role, user.department, user.employeeId]
     );
 
     res.status(201).json({ user });

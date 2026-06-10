@@ -32,6 +32,10 @@ api.interceptors.response.use(
     if (error.response?.status === 401) {
       localStorage.removeItem('skillcheck_token');
       localStorage.removeItem('skillcheck_user');
+      if (!['/login', '/register'].includes(window.location.pathname)) {
+        sessionStorage.setItem('skillcheck_session_message', error.response.data?.message || 'Your session expired. Please log in again.');
+        window.location.assign('/login');
+      }
     }
     return Promise.reject(error);
   }

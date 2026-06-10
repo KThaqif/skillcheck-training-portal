@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api, { API_BASE_URL } from '../api.js';
 
@@ -8,6 +8,14 @@ export default function Login() {
   const [password, setPassword] = useState('employee123');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const sessionMessage = sessionStorage.getItem('skillcheck_session_message');
+    if (sessionMessage) {
+      setError(sessionMessage);
+      sessionStorage.removeItem('skillcheck_session_message');
+    }
+  }, []);
 
   async function handleSubmit(event) {
     event.preventDefault();

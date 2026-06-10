@@ -1,6 +1,7 @@
 import dotenv from 'dotenv';
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { seedDb } from './db.js';
@@ -24,6 +25,8 @@ const allowedOrigins = [
   'http://127.0.0.1:5173'
 ].filter(Boolean);
 
+app.set('trust proxy', 1);
+
 function isAllowedOrigin(origin) {
   if (!origin || allowedOrigins.includes(origin)) {
     return true;
@@ -44,6 +47,9 @@ function isAllowedOrigin(origin) {
   }
 }
 
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' }
+}));
 app.use(cors({
   origin(origin, callback) {
     if (isAllowedOrigin(origin)) {
