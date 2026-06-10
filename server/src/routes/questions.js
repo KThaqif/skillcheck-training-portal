@@ -1,6 +1,6 @@
 import express from 'express';
 import { v4 as uuid } from 'uuid';
-import { mapQuestion, query } from '../db.js';
+import { mapQuestion, pool, query } from '../db.js';
 import { requireAuth, requireRole } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -29,6 +29,8 @@ router.get('/video/:videoId', requireAuth, async (req, res, next) => {
 });
 
 router.post('/video/:videoId', requireAuth, requireRole('ADMIN'), async (req, res, next) => {
+  let connection;
+
   try {
     const { timestamp, questionText, options, correctAnswer, correctOptionIndex } = req.body;
     const videoRows = await query('SELECT id FROM videos WHERE id = ? LIMIT 1', [req.params.videoId]);
@@ -46,8 +48,8 @@ router.post('/video/:videoId', requireAuth, requireRole('ADMIN'), async (req, re
       ? cleanedOptions[selectedIndex]
       : String(correctAnswer || '').trim();
 
-    if (!Number.isFinite(timestampSeconds) || timestampSeconds < 0) {
-      return res.status(400).json({ message: 'Timestamp second must be 0 or greater.' });
+    if (!Number.isInteger(timestampSeconds) || timestampSeconds <= 0) {
+      return res.status(400).json({ message: 'Pause time must be a whole number greater than 0 seconds.' });
     }
 
     if (!cleanedQuestion) {
@@ -77,7 +79,10 @@ router.post('/video/:videoId', requireAuth, requireRole('ADMIN'), async (req, re
       createdAt: new Date().toISOString()
     };
 
-    await query(
+    connection = await pool.getConnection();
+    await connection.beginTransaction();
+
+    await connection.execute(
       `INSERT INTO questions
        (id, video_id, timestamp_seconds, question_text, question_type, correct_answer)
        VALUES (?, ?, ?, ?, 'MULTIPLE_CHOICE', ?)`,
@@ -85,15 +90,25 @@ router.post('/video/:videoId', requireAuth, requireRole('ADMIN'), async (req, re
     );
 
     for (const [index, option] of cleanedOptions.entries()) {
-      await query(
+      await connection.execute(
         'INSERT INTO question_options (id, question_id, option_text, is_correct) VALUES (?, ?, ?, ?)',
         [uuid(), question.id, option, selectedIndex >= 0 ? index === selectedIndex : option === selectedCorrectAnswer]
       );
     }
 
+    await connection.commit();
     res.status(201).json({ question });
   } catch (error) {
+    if (connection) {
+      await connection.rollback().catch(() => {});
+    }
+    if (!error.statusCode) {
+      error.statusCode = 500;
+      error.message = 'Unable to save checkpoint question. Please try again.';
+    }
     next(error);
+  } finally {
+    connection?.release();
   }
 });
 

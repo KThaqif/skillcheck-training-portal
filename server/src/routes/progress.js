@@ -59,6 +59,13 @@ router.post('/answer', requireAuth, async (req, res, next) => {
       'SELECT option_text FROM question_options WHERE question_id = ? AND is_correct = 1 LIMIT 1',
       [questionId]
     );
+    const optionRows = await query('SELECT option_text FROM question_options WHERE question_id = ?', [questionId]);
+    const allowedAnswers = optionRows.map((row) => row.option_text);
+
+    if (!allowedAnswers.includes(selectedAnswer)) {
+      return res.status(400).json({ message: 'Selected answer must match one of the question options.' });
+    }
+
     const correctAnswer = correctOptionRows[0]?.option_text || question.correct_answer;
     const isCorrect = selectedAnswer === correctAnswer;
     const existingRows = await query(

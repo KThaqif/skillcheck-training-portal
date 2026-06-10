@@ -25,6 +25,7 @@ export default function VideoLesson() {
   const [selected, setSelected] = useState('');
   const [result, setResult] = useState(null);
   const [playbackMessage, setPlaybackMessage] = useState('');
+  const [quizError, setQuizError] = useState('');
 
   useEffect(() => {
     furthestWatchedRef.current = 0;
@@ -104,12 +105,18 @@ export default function VideoLesson() {
     if (dueQuestion) {
       player.pause();
       const questionTime = Number(dueQuestion.timestamp);
+      isRestoringSeekRef.current = true;
+      player.currentTime = questionTime;
       furthestWatchedRef.current = Math.max(furthestWatchedRef.current, questionTime);
       lastAllowedTimeRef.current = questionTime;
       setActiveQuestion(dueQuestion);
       setSelected('');
       setResult(null);
+      setQuizError('');
       setPlaybackMessage('');
+      window.setTimeout(() => {
+        isRestoringSeekRef.current = false;
+      }, 150);
       return;
     }
 
@@ -131,15 +138,21 @@ export default function VideoLesson() {
       setActiveQuestion(null);
       setSelected('');
       setResult(null);
+      setQuizError('');
       setTimeout(() => videoRef.current?.play(), 250);
       return;
     }
 
-    const response = await api.post('/progress/answer', {
-      questionId: activeQuestion.id,
-      selectedAnswer: selected
-    });
-    setResult(response.data.answer);
+    try {
+      const response = await api.post('/progress/answer', {
+        questionId: activeQuestion.id,
+        selectedAnswer: selected
+      });
+      setResult(response.data.answer);
+      setQuizError('');
+    } catch (error) {
+      setQuizError(error.response?.data?.message || 'Unable to save your answer. Please try again.');
+    }
   }
 
   async function handleEnded() {
@@ -209,6 +222,7 @@ export default function VideoLesson() {
           selected={selected}
           setSelected={setSelected}
           result={result}
+          error={quizError}
           onSubmit={handleSubmitAnswer}
         />
       )}

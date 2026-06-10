@@ -253,7 +253,7 @@ export default function AdminDashboard() {
       });
 
       setMessageType('success');
-      setMessage('Question added. The video will pause at that timestamp.');
+      setMessage(`Checkpoint question added at ${formatPauseTime(timestamp)}.`);
       setQuestionForm({ pauseMinutes: '', pauseSeconds: '', questionText: '', option1: '', option2: '', option3: '', option4: '', correctOption: '' });
       const response = await api.get(`/videos/topic/${selectedTopicId}`);
       setVideos(response.data.videos);

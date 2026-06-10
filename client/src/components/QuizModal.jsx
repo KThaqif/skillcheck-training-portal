@@ -1,4 +1,4 @@
-export default function QuizModal({ question, selected, setSelected, onSubmit, result }) {
+export default function QuizModal({ question, selected, setSelected, onSubmit, result, error }) {
   return (
     <div className="modal-backdrop">
       <div className="quiz-modal">
@@ -21,6 +21,7 @@ export default function QuizModal({ question, selected, setSelected, onSubmit, r
             {result.isCorrect ? 'Correct answer. You may continue the video.' : `Wrong answer. Correct answer: ${result.correctAnswer}`}
           </div>
         )}
+        {error && <div className="error-box">{error}</div>}
         <button className="primary-button wide" onClick={onSubmit} disabled={!selected && !result}>
           {result ? 'Continue Video' : 'Submit Answer'}
         </button>
