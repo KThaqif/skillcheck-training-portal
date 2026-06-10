@@ -64,7 +64,7 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 app.use('/sample-training.mp4', express.static(path.join(__dirname, '../uploads/sample-training.mp4')));
 
 app.get('/', (req, res) => {
-  res.json({ message: 'SkillCheck Training Portal API is running.' });
+  res.json({ message: 'Perodua SHE Safety Awareness Training Portal API is running.' });
 });
 
 app.use('/api/auth', authRoutes);
@@ -82,7 +82,7 @@ app.use((err, req, res, next) => {
 try {
   await seedDb();
   app.listen(PORT, () => {
-    console.log(`SkillCheck API running on http://localhost:${PORT}`);
+    console.log(`Perodua SHE Safety Awareness API running on http://localhost:${PORT}`);
   });
 } catch (error) {
   console.error(error.message);

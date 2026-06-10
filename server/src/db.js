@@ -19,10 +19,10 @@ export const pool = mysql.createPool({
 
 const demoUsers = [
   {
-    name: 'Admin Trainer',
+    name: 'SHE Admin',
     email: 'admin@company.com',
     employeeId: 'ADM001',
-    department: 'Training Department',
+    department: 'Perodua SHE Department',
     role: 'ADMIN',
     password: 'admin123'
   },
@@ -30,7 +30,7 @@ const demoUsers = [
     name: 'Employee Demo',
     email: 'employee@company.com',
     employeeId: 'EMP001',
-    department: 'IT Department',
+    department: 'Production Safety Area',
     role: 'EMPLOYEE',
     password: 'employee123'
   }
@@ -187,10 +187,10 @@ export async function seedDb() {
      VALUES (?, ?, ?, ?, ?, CURDATE(), ?, 'LAUNCHED', NOW(), ?)`,
     [
       topicId,
-      'Cybersecurity Awareness Training',
-      'Learn how to identify phishing emails, protect passwords, and report suspicious activity.',
-      'IT Security',
-      'https://images.unsplash.com/photo-1563986768494-4dee2763ff3f?auto=format&fit=crop&w=1000&q=80',
+      'PPE Compliance and Hazard Awareness',
+      'Perodua SHE safety awareness campaign covering PPE compliance, hazard identification, and accident prevention behaviours in the workplace.',
+      'PPE Compliance',
+      'https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?auto=format&fit=crop&w=1000&q=80',
       '2026-06-30',
       admin?.id || null
     ]
@@ -203,8 +203,8 @@ export async function seedDb() {
     [
       videoId,
       topicId,
-      'Introduction to Cybersecurity',
-      'Sample video. Replace this with your uploaded training video.',
+      'PPE Compliance Safety Briefing',
+      'Sample SHE safety awareness video. Replace this with an approved Perodua SHE workplace safety video.',
       'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4',
       'sample-training.mp4'
     ]
@@ -217,16 +217,16 @@ export async function seedDb() {
     [
       questionId,
       videoId,
-      'What should you do when you receive a suspicious email?',
-      'Report it to IT or security team'
+      'What should you do before entering a PPE-required work area?',
+      'Wear the required PPE and check that it is in good condition'
     ]
   );
 
-  const options = ['Click the link quickly', 'Ignore company policy', 'Report it to IT or security team', 'Forward it to everyone'];
+  const options = ['Enter quickly without checking PPE', 'Wear the required PPE and check that it is in good condition', 'Ask another employee to enter first', 'Ignore the sign if the task is short'];
   for (const option of options) {
     await query(
       'INSERT INTO question_options (id, question_id, option_text, is_correct) VALUES (?, ?, ?, ?)',
-      [uuid(), questionId, option, option === 'Report it to IT or security team']
+      [uuid(), questionId, option, option === 'Wear the required PPE and check that it is in good condition']
     );
   }
 }

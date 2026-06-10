@@ -53,8 +53,14 @@ button, input, textarea, select { font: inherit; }
   color: white;
   font-weight: 900;
 }
+.brand-logo {
+  object-fit: contain;
+  background: white;
+  padding: 3px;
+  border: 1px solid var(--line);
+}
 .brand-icon.large { width: 72px; height: 72px; font-size: 34px; }
-.brand h1 { margin: 0; font-size: 32px; letter-spacing: -1px; }
+.brand h1 { margin: 0; font-size: 26px; letter-spacing: 0; }
 .brand span { font-size: 12px; color: var(--muted); font-weight: 600; }
 
 .nav-links {
@@ -167,6 +173,34 @@ button, input, textarea, select { font: inherit; }
 .section-title-row.compact-row { margin: 0 0 20px; }
 .section-title-row h2 { margin: 0; font-size: 26px; }
 .section-title-row span { color: var(--muted); }
+.section-copy {
+  color: var(--muted);
+  line-height: 1.55;
+  margin: -8px 0 18px;
+}
+.info-panel {
+  margin-top: 18px;
+  background: #f8fbff;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--accent);
+  border-radius: 8px;
+  padding: 16px 18px;
+}
+.info-panel strong {
+  display: block;
+  color: var(--primary);
+  margin-bottom: 6px;
+}
+.info-panel p {
+  margin: 0 0 8px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+.info-panel span {
+  color: var(--text);
+  font-weight: 800;
+  font-size: 13px;
+}
 
 .topic-grid {
   display: grid;

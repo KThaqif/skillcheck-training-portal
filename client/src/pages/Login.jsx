@@ -47,18 +47,18 @@ export default function Login() {
       <section className="login-panel">
         <div className="login-visual">
           <div className="brand-icon large">✓</div>
-          <h1>SkillCheck</h1>
-          <p>Launch employee training topics with interactive video quiz checkpoints.</p>
+          <h1>Perodua SHE</h1>
+          <p>Safety awareness training for workplace hazard awareness, safety compliance, and accident prevention.</p>
           <div className="demo-accounts">
             <strong>Demo accounts</strong>
             <span>Employee: employee@company.com / employee123</span>
-            <span>Admin: admin@company.com / admin123</span>
+            <span>SHE Admin: admin@company.com / admin123</span>
           </div>
         </div>
 
         <form className="login-form" onSubmit={handleSubmit}>
-          <span className="eyebrow">Company Learning Portal</span>
-          <h2>Login to your account</h2>
+          <span className="eyebrow">Perodua SHE Safety Awareness Training Portal</span>
+          <h2>Login to your safety account</h2>
           <label>
             Email
             <input value={email} onChange={(event) => setEmail(event.target.value)} type="email" placeholder="employee@company.com" />
@@ -69,7 +69,7 @@ export default function Login() {
           </label>
           {error && <div className="error-box">{error}</div>}
           <button className="primary-button" disabled={loading}>{loading ? 'Signing in...' : 'Login'}</button>
-          <Link className="register-link" to="/register">Register now</Link>
+          <Link className="register-link" to="/register">Register employee account</Link>
         </form>
       </section>
     </main>

@@ -2,7 +2,7 @@ export default function QuizModal({ question, selected, setSelected, onSubmit, r
   return (
     <div className="modal-backdrop">
       <div className="quiz-modal">
-        <span className="modal-label">Checkpoint Question</span>
+        <span className="modal-label">Safety Checkpoint Question</span>
         <h2>{question.questionText}</h2>
         <div className="option-list">
           {question.options.map((option) => (
@@ -18,12 +18,12 @@ export default function QuizModal({ question, selected, setSelected, onSubmit, r
         </div>
         {result && (
           <div className={result.isCorrect ? 'answer-result correct' : 'answer-result wrong'}>
-            {result.isCorrect ? 'Correct answer. You may continue the video.' : `Wrong answer. Correct answer: ${result.correctAnswer}`}
+            {result.isCorrect ? 'Correct answer. You may continue the safety video.' : `Wrong answer. Correct answer: ${result.correctAnswer}`}
           </div>
         )}
         {error && <div className="error-box">{error}</div>}
         <button className="primary-button wide" onClick={onSubmit} disabled={!selected && !result}>
-          {result ? 'Continue Video' : 'Submit Answer'}
+          {result ? 'Continue Safety Video' : 'Submit Safety Answer'}
         </button>
       </div>
     </div>

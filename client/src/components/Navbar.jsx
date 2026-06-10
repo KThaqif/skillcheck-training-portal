@@ -13,17 +13,17 @@ export default function Navbar() {
   return (
     <header className="navbar">
       <Link to={user?.role === 'ADMIN' ? '/admin' : '/dashboard'} className="brand">
-        <div className="brand-icon">✓</div>
+        <img className="brand-icon brand-logo" src="/perodua.jpg" alt="Perodua" />
         <div>
-          <h1>SKILLCHECK</h1>
-          <span>Interactive Employee Training Portal</span>
+          <h1>SHE Perodua</h1>
+          <span>Perodua SHE Safety Awareness Training Portal</span>
         </div>
       </Link>
 
       <nav className="nav-links">
-        {user?.role === 'ADMIN' ? <NavLink to="/admin" end>Dashboard</NavLink> : <NavLink to="/dashboard">Dashboard</NavLink>}
-        {user?.role === 'ADMIN' && <NavLink to="/admin/reports">Reports</NavLink>}
-        {user?.role !== 'ADMIN' && <NavLink to="/results">My Results</NavLink>}
+        {user?.role === 'ADMIN' ? <NavLink to="/admin" end>SHE Admin Dashboard</NavLink> : <NavLink to="/dashboard">Safety Dashboard</NavLink>}
+        {user?.role === 'ADMIN' && <NavLink to="/admin/reports">SHE Reports</NavLink>}
+        {user?.role !== 'ADMIN' && <NavLink to="/results">Safety Results</NavLink>}
       </nav>
 
       <div className="nav-actions">

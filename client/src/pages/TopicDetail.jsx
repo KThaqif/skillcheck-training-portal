@@ -22,7 +22,7 @@ export default function TopicDetail() {
   }
 
   if (!topic) {
-    return <><Navbar /><main className="page-shell"><p>Loading topic...</p></main></>;
+    return <><Navbar /><main className="page-shell"><p>Loading safety campaign...</p></main></>;
   }
 
   return (
@@ -35,26 +35,27 @@ export default function TopicDetail() {
             <h2>{topic.title}</h2>
             <p>{topic.description}</p>
             <div className="topic-meta big">
-              <span>{videos.length} videos</span>
-              <span>{topic.progress?.totalQuestions || 0} questions</span>
-              <span>Deadline: {topic.deadline}</span>
+              <span>{videos.length} safety video(s)</span>
+              <span>{topic.progress?.totalQuestions || 0} checkpoint question(s)</span>
+              <span>Campaign deadline: {topic.deadline}</span>
             </div>
           </div>
-          <div className="circle-progress"><strong>{topic.progress?.progressPercent || 0}%</strong><span>Complete</span></div>
+          <div className="circle-progress"><strong>{topic.progress?.progressPercent || 0}%</strong><span>Safety Module Complete</span></div>
         </section>
 
         <section className="content-card">
-          <h2>Video Lessons</h2>
+          <h2>Safety Awareness Video Modules</h2>
+          <p className="section-copy">Watch each safety video carefully. Checkpoint questions help confirm hazard awareness and safe work practices.</p>
           <div className="video-list">
             {videos.map((video, index) => (
               <Link className="video-row" to={`/topics/${topicId}/videos/${video.id}`} key={video.id}>
                 <div className="video-number">{index + 1}</div>
                 <div>
                   <h3>{video.title}</h3>
-                  <p>{video.description || 'No description.'}</p>
+                  <p>{video.description || 'No safety module description.'}</p>
                 </div>
                 <span className={isVideoCompleted(video.id) ? 'status-pill complete' : 'status-pill'}>
-                  {isVideoCompleted(video.id) ? 'Completed' : `${video.questionCount} questions`}
+                  {isVideoCompleted(video.id) ? 'Completed' : `${video.questionCount} safety checks`}
                 </span>
               </Link>
             ))}

@@ -48,17 +48,17 @@ export default function Register() {
       <section className="login-panel">
         <div className="login-visual">
           <div className="brand-icon large">SC</div>
-          <h1>SkillCheck</h1>
-          <p>Create an employee learning account to access assigned video training and checkpoint quizzes.</p>
+          <h1>SHE Perodua</h1>
+          <p>Create an employee account to access Perodua SHE safety campaigns, awareness videos, and checkpoint questions.</p>
           <div className="demo-accounts">
             <strong>Already registered?</strong>
-            <span>Use your company email and password to continue.</span>
+            <span>Use your company email and password to continue safety awareness training.</span>
           </div>
         </div>
 
         <form className="login-form" onSubmit={handleSubmit}>
-          <span className="eyebrow">Employee Registration</span>
-          <h2>Create your account</h2>
+          <span className="eyebrow">Employee Safety Registration</span>
+          <h2>Create your safety account</h2>
           <label>
             Full Name
             <input value={form.name} onChange={(event) => updateField('name', event.target.value)} placeholder="Your full name" required />
@@ -73,7 +73,7 @@ export default function Register() {
           </label>
           <label>
             Department
-            <input value={form.department} onChange={(event) => updateField('department', event.target.value)} placeholder="Department" required />
+            <input value={form.department} onChange={(event) => updateField('department', event.target.value)} placeholder="Department or section" required />
           </label>
           <label>
             Password

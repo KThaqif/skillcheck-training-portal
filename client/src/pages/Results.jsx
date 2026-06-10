@@ -14,15 +14,16 @@ export default function Results() {
       <Navbar />
       <main className="page-shell">
         <section className="content-card">
-          <h2>My Training Results</h2>
+          <h2>My Safety Results</h2>
+          <p className="section-copy">Review your safety campaign completion, checkpoint answers, and safety understanding score.</p>
           <table className="data-table">
             <thead>
               <tr>
-                <th>Topic</th>
+                <th>Safety Campaign</th>
                 <th>Progress</th>
-                <th>Questions Answered</th>
-                <th>Score</th>
-                <th>Deadline</th>
+                <th>Safety Checks Answered</th>
+                <th>Safety Score</th>
+                <th>Campaign Deadline</th>
               </tr>
             </thead>
             <tbody>

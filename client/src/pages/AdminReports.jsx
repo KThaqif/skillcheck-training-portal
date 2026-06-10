@@ -62,27 +62,32 @@ export default function AdminReports() {
       <main className="page-shell">
         <section className="hero-panel">
           <div>
-            <span className="eyebrow">Admin Reports</span>
-            <h2>Employee training progress and quiz performance.</h2>
-            <p>Review assigned topics, completion status, question attempts, and scores across employees.</p>
+            <span className="eyebrow">SHE Reports</span>
+            <h2>Employee Safety Awareness Report</h2>
+            <p>Review safety campaign completion, checkpoint question attempts, and safety understanding scores across employees and departments.</p>
           </div>
           <div className="stats-grid compact">
             <div className="stat-card"><strong>{summary.employeeCount}</strong><span>Employees</span></div>
-            <div className="stat-card"><strong>{summary.completedCount}</strong><span>Completed</span></div>
-            <div className="stat-card"><strong>{summary.averageScore}%</strong><span>Avg Score</span></div>
+            <div className="stat-card"><strong>{summary.completedCount}</strong><span>Completed Safety Modules</span></div>
+            <div className="stat-card"><strong>{summary.averageScore}%</strong><span>Average Safety Score</span></div>
           </div>
         </section>
 
         {error && <div className="error-box">{error}</div>}
 
+        <section className="info-panel">
+          <strong>How SHE reporting supports accident reduction</strong>
+          <p>Completion and safety understanding scores help the Perodua SHE Department identify awareness gaps, follow up with departments, and strengthen workplace safety compliance.</p>
+        </section>
+
         <section className="content-card">
           <div className="section-title-row compact-row">
-            <h2>Training Report</h2>
-            <span>{summary.assignmentCount} assignment(s)</span>
+            <h2>Safety Campaign Completion Report</h2>
+            <span>{summary.assignmentCount} campaign assignment(s)</span>
           </div>
 
           <div className="report-filters">
-            <label>Department
+            <label>Department / SHE Area
               <select value={departmentFilter} onChange={(event) => setDepartmentFilter(event.target.value)}>
                 <option value="ALL">All departments</option>
                 {departments.map((department) => (
@@ -90,9 +95,9 @@ export default function AdminReports() {
                 ))}
               </select>
             </label>
-            <label>Topic
+            <label>Safety Campaign
               <select value={topicFilter} onChange={(event) => setTopicFilter(event.target.value)}>
-                <option value="ALL">All topics</option>
+                <option value="ALL">All safety campaigns</option>
                 {topics.map((topic) => (
                   <option key={topic.id} value={topic.id}>{topic.title}</option>
                 ))}
@@ -100,25 +105,25 @@ export default function AdminReports() {
             </label>
           </div>
 
-          {loading ? <p>Loading reports...</p> : (
+          {loading ? <p>Loading SHE reports...</p> : (
             <table className="data-table">
               <thead>
                 <tr>
                   <th>Employee</th>
                   <th>Email</th>
                   <th>Department</th>
-                  <th>Topic</th>
-                  <th>Videos</th>
+                  <th>Safety Campaign</th>
+                  <th>Safety Videos</th>
                   <th>Progress</th>
-                  <th>Questions</th>
-                  <th>Score</th>
-                  <th>Deadline</th>
+                  <th>Safety Checks</th>
+                  <th>Safety Score</th>
+                  <th>Campaign Deadline</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredRows.length === 0 ? (
                   <tr>
-                    <td colSpan="9">No report data yet.</td>
+                    <td colSpan="9">No safety awareness report data yet.</td>
                   </tr>
                 ) : filteredRows.map(({ employee, topic }) => (
                   <tr key={`${employee.id}-${topic.topicId}`}>

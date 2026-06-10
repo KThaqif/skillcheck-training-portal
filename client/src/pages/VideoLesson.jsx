@@ -79,7 +79,7 @@ export default function VideoLesson() {
     const skippedRequiredQuestion = attemptedForwardSeek && hasUnansweredQuestionBetween(previousAllowedTime, targetTime);
 
     if (beyondWatchedTime || skippedRequiredQuestion) {
-      restoreAllowedTime('Please watch the video and answer the required question before continuing.');
+      restoreAllowedTime('Please watch the safety video and answer the required checkpoint question before continuing.');
       return;
     }
 
@@ -151,7 +151,7 @@ export default function VideoLesson() {
       setResult(response.data.answer);
       setQuizError('');
     } catch (error) {
-      setQuizError(error.response?.data?.message || 'Unable to save your answer. Please try again.');
+      setQuizError(error.response?.data?.message || 'Unable to save your safety answer. Please try again.');
     }
   }
 
@@ -162,7 +162,7 @@ export default function VideoLesson() {
     const duration = Math.floor(player.duration || 0);
     const reachedEndNormally = duration > 0 && furthestWatchedRef.current >= duration - 1.25;
     if (isEmployee && !reachedEndNormally) {
-      restoreAllowedTime('Please watch the video before completing this lesson.');
+      restoreAllowedTime('Please watch the safety video before completing this module.');
       return;
     }
 
@@ -175,22 +175,22 @@ export default function VideoLesson() {
   }
 
   if (!video) {
-    return <><Navbar /><main className="page-shell"><p>Loading video...</p></main></>;
+    return <><Navbar /><main className="page-shell"><p>Loading safety video...</p></main></>;
   }
 
   return (
     <>
       <Navbar />
       <main className="page-shell video-page">
-        <Link to={`/topics/${topicId}`} className="back-link">← Back to topic</Link>
+        <Link to={`/topics/${topicId}`} className="back-link">Back to safety campaign</Link>
         <section className="content-card">
           <div className="video-header">
             <div>
-              <span className="eyebrow">Interactive Video</span>
+              <span className="eyebrow">Safety Awareness Video</span>
               <h2>{video.title}</h2>
               <p>{video.description}</p>
             </div>
-            <span className="status-pill">{questions.length} checkpoint questions</span>
+            <span className="status-pill">{questions.length} safety checkpoint question(s)</span>
           </div>
 
           <video
@@ -202,12 +202,12 @@ export default function VideoLesson() {
             onTimeUpdate={handleTimeUpdate}
             onEnded={handleEnded}
           />
-          {isEmployee && <p className="training-integrity-note">Fast forward is disabled for training integrity. You may rewind and rewatch anytime.</p>}
+          {isEmployee && <p className="training-integrity-note">This safety video contains checkpoint questions. Please watch carefully and answer each question to continue. Fast forward is disabled for training integrity. You may rewind and rewatch anytime.</p>}
           {playbackMessage && <div className="video-warning">{playbackMessage}</div>}
 
           <div className="question-timeline">
-            <h3>Question Timeline</h3>
-            {questions.length === 0 ? <p>No questions for this video.</p> : questions.map((question) => (
+            <h3>Safety Checkpoint Timeline</h3>
+            {questions.length === 0 ? <p>No checkpoint questions for this safety video.</p> : questions.map((question) => (
               <div key={question.id} className="timeline-item">
                 <strong>{Math.floor(question.timestamp / 60)}:{String(question.timestamp % 60).padStart(2, '0')}</strong>
                 <span>{question.questionText}</span>
