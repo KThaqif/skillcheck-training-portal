@@ -15,6 +15,9 @@ function formatPauseTime(totalSeconds) {
   return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 }
 
+const allowedVideoExtensions = ['mp4', 'webm', 'mov'];
+const allowedVideoMimeTypes = ['video/mp4', 'video/webm', 'video/quicktime', 'video/x-quicktime', 'video/mov'];
+
 export default function AdminDashboard() {
   const questionVideoRef = useRef(null);
   const [topics, setTopics] = useState([]);
@@ -154,21 +157,34 @@ export default function AdminDashboard() {
       return;
     }
 
+    const extension = videoForm.file.name.split('.').pop()?.toLowerCase();
+    if (!allowedVideoExtensions.includes(extension) || (videoForm.file.type && !allowedVideoMimeTypes.includes(videoForm.file.type))) {
+      setMessageType('error');
+      setMessage('Only MP4, WebM, and MOV video files are allowed.');
+      return;
+    }
+
     const formData = new FormData();
     formData.append('title', videoForm.title);
     formData.append('description', videoForm.description);
     formData.append('order', videoForm.order);
     formData.append('video', videoForm.file);
 
-    await api.post(`/videos/topic/${selectedTopicId}`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    });
-    setMessageType('success');
-    setMessage('Video uploaded successfully.');
-    setVideoForm({ title: '', description: '', order: 1, file: null });
-    const response = await api.get(`/videos/topic/${selectedTopicId}`);
-    setVideos(response.data.videos);
-    loadData();
+    try {
+      await api.post(`/videos/topic/${selectedTopicId}`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        timeout: 0
+      });
+      setMessageType('success');
+      setMessage('Video uploaded successfully.');
+      setVideoForm({ title: '', description: '', order: 1, file: null });
+      const response = await api.get(`/videos/topic/${selectedTopicId}`);
+      setVideos(response.data.videos);
+      loadData();
+    } catch (error) {
+      setMessageType('error');
+      setMessage(error.response?.data?.message || 'Unable to upload video. Check the file and try again.');
+    }
   }
 
   async function addQuestion(event) {
@@ -324,7 +340,7 @@ export default function AdminDashboard() {
               <label>Video Title<input value={videoForm.title} onChange={(e) => setVideoForm({ ...videoForm, title: e.target.value })} required /></label>
               <label>Order<input type="number" value={videoForm.order} onChange={(e) => setVideoForm({ ...videoForm, order: e.target.value })} /></label>
               <label className="span-2">Description<textarea value={videoForm.description} onChange={(e) => setVideoForm({ ...videoForm, description: e.target.value })} /></label>
-              <label className="span-2">Video File<input type="file" accept="video/*" onChange={(e) => setVideoForm({ ...videoForm, file: e.target.files[0] })} required /></label>
+              <label className="span-2">Video File<input type="file" accept=".mp4,.webm,.mov,video/mp4,video/webm,video/quicktime" onChange={(e) => setVideoForm({ ...videoForm, file: e.target.files[0] })} required /></label>
               <button className="primary-button">Upload Video</button>
             </form>
           </section>

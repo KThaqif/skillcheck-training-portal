@@ -1,5 +1,7 @@
 import express from 'express';
 import multer from 'multer';
+import { v2 as cloudinary } from 'cloudinary';
+import os from 'os';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
@@ -10,8 +12,20 @@ import { requireAuth, requireRole } from '../middleware/auth.js';
 const router = express.Router();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const uploadDir = path.join(__dirname, '../../uploads');
+const uploadDir = path.join(os.tmpdir(), 'skillcheck-video-uploads');
 fs.mkdirSync(uploadDir, { recursive: true });
+
+const allowedVideoTypes = new Map([
+  ['.mp4', new Set(['video/mp4'])],
+  ['.webm', new Set(['video/webm'])],
+  ['.mov', new Set(['video/quicktime', 'video/x-quicktime', 'video/mov'])]
+]);
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, uploadDir),
@@ -25,12 +39,70 @@ const upload = multer({
   storage,
   limits: { fileSize: 500 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
-    if (!file.mimetype.startsWith('video/')) {
-      return cb(new Error('Only video files are allowed.'));
+    const extension = path.extname(file.originalname).toLowerCase();
+    const allowedMimeTypes = allowedVideoTypes.get(extension);
+
+    if (!allowedMimeTypes || !allowedMimeTypes.has(file.mimetype)) {
+      return cb(new Error('Only MP4, WebM, and MOV video files are allowed.'));
     }
+
     cb(null, true);
   }
 });
+
+function uploadVideoFile(req, res, next) {
+  upload.single('video')(req, res, (error) => {
+    if (!error) {
+      return next();
+    }
+
+    if (error instanceof multer.MulterError) {
+      const message = error.code === 'LIMIT_FILE_SIZE'
+        ? 'Video file is too large. Maximum upload size is 500 MB.'
+        : error.message;
+      return res.status(400).json({ message });
+    }
+
+    return res.status(400).json({ message: error.message || 'Invalid video upload.' });
+  });
+}
+
+function requireCloudinaryConfig() {
+  if (
+    !process.env.CLOUDINARY_CLOUD_NAME
+    || !process.env.CLOUDINARY_API_KEY
+    || !process.env.CLOUDINARY_API_SECRET
+  ) {
+    const error = new Error('Cloudinary is not configured. Set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET.');
+    error.statusCode = 500;
+    throw error;
+  }
+}
+
+function removeTempFile(filePath) {
+  if (!filePath) return;
+  fs.promises.unlink(filePath).catch(() => {});
+}
+
+async function uploadToCloudinary(filePath, originalName) {
+  try {
+    return await cloudinary.uploader.upload(filePath, {
+      resource_type: 'video',
+      folder: 'skillcheck-training-videos',
+      use_filename: true,
+      unique_filename: true,
+      overwrite: false,
+      context: {
+        original_filename: originalName
+      }
+    });
+  } catch (error) {
+    const uploadError = new Error('Video upload to Cloudinary failed. Please try again.');
+    uploadError.statusCode = 502;
+    uploadError.cause = error;
+    throw uploadError;
+  }
+}
 
 async function getOptions(questionId) {
   const rows = await query('SELECT option_text FROM question_options WHERE question_id = ? ORDER BY id ASC', [questionId]);
@@ -54,7 +126,7 @@ router.get('/topic/:topicId', requireAuth, async (req, res, next) => {
   }
 });
 
-router.post('/topic/:topicId', requireAuth, requireRole('ADMIN'), upload.single('video'), async (req, res, next) => {
+router.post('/topic/:topicId', requireAuth, requireRole('ADMIN'), uploadVideoFile, async (req, res, next) => {
   try {
     const { title, description, order } = req.body;
     const topicRows = await query('SELECT id FROM topics WHERE id = ? LIMIT 1', [req.params.topicId]);
@@ -67,28 +139,35 @@ router.post('/topic/:topicId', requireAuth, requireRole('ADMIN'), upload.single(
       return res.status(400).json({ message: 'Video title and video file are required.' });
     }
 
+    requireCloudinaryConfig();
+
+    const cloudinaryVideo = await uploadToCloudinary(req.file.path, req.file.originalname);
     const countRows = await query('SELECT COUNT(*) AS count FROM videos WHERE topic_id = ?', [req.params.topicId]);
+    const duration = Math.floor(Number(cloudinaryVideo.duration || req.body.duration) || 0);
     const video = {
       id: uuid(),
       topicId: req.params.topicId,
       title,
       description: description || '',
       order: Number(order) || Number(countRows[0].count) + 1,
-      videoUrl: `/uploads/${req.file.filename}`,
+      videoUrl: cloudinaryVideo.secure_url,
       originalName: req.file.originalname,
+      duration,
       createdAt: new Date().toISOString()
     };
 
     await query(
       `INSERT INTO videos
-       (id, topic_id, title, description, video_url, original_name, video_order)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [video.id, video.topicId, video.title, video.description, video.videoUrl, video.originalName, video.order]
+       (id, topic_id, title, description, video_url, original_name, video_order, duration)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [video.id, video.topicId, video.title, video.description, video.videoUrl, video.originalName, video.order, video.duration]
     );
 
     res.status(201).json({ video });
   } catch (error) {
     next(error);
+  } finally {
+    removeTempFile(req.file?.path);
   }
 });
 
