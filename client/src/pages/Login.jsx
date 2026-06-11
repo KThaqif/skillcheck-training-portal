@@ -46,14 +46,9 @@ export default function Login() {
     <main className="login-page">
       <section className="login-panel">
         <div className="login-visual">
-          <div className="brand-icon large">✓</div>
+          <img className="brand-icon brand-logo login-logo" src="/perodua.jpg" alt="Perodua" />
           <h1>Perodua SHE</h1>
           <p>Safety awareness training for workplace hazard awareness, safety compliance, and accident prevention.</p>
-          <div className="demo-accounts">
-            <strong>Demo accounts</strong>
-            <span>Employee: employee@company.com / employee123</span>
-            <span>SHE Admin: admin@company.com / admin123</span>
-          </div>
         </div>
 
         <form className="login-form" onSubmit={handleSubmit}>
