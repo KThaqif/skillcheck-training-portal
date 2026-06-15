@@ -6,6 +6,7 @@ import TopicDetail from './pages/TopicDetail.jsx';
 import VideoLesson from './pages/VideoLesson.jsx';
 import AdminDashboard from './pages/AdminDashboard.jsx';
 import AdminReports from './pages/AdminReports.jsx';
+import DataMonitoring from './pages/DataMonitoring.jsx';
 import Results from './pages/Results.jsx';
 
 function getUser() {
@@ -81,6 +82,14 @@ export default function App() {
         element={
           <ProtectedRoute roles={['ADMIN']}>
             <AdminReports />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/data-monitoring"
+        element={
+          <ProtectedRoute roles={['ADMIN']}>
+            <DataMonitoring />
           </ProtectedRoute>
         }
       />

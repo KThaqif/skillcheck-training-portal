@@ -546,6 +546,23 @@ input:focus, textarea:focus, select:focus { border-color: var(--primary); box-sh
 .report-filters label {
   width: min(320px, 100%);
 }
+.data-monitoring-summary {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-top: 24px;
+}
+.data-monitoring-filters {
+  justify-content: flex-start;
+  align-items: end;
+}
+.pagination-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 14px;
+  margin-top: 18px;
+  color: var(--muted);
+  font-weight: 700;
+}
 
 .content-card:has(.data-table) {
   overflow-x: auto;
@@ -571,6 +588,7 @@ input:focus, textarea:focus, select:focus { border-color: var(--primary); box-sh
   .nav-links a { padding: 0 0 6px; }
   .brand h1 { font-size: 24px; }
   .topic-grid, .admin-grid, .form-grid, .login-panel, .pause-time-inputs { grid-template-columns: 1fr; }
+  .data-monitoring-summary { grid-template-columns: 1fr; }
   .span-2 { grid-column: span 1; }
   .stats-grid { grid-template-columns: 1fr; }
   .admin-topic-row { flex-direction: column; align-items: stretch; }

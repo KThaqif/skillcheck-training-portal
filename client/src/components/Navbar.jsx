@@ -23,6 +23,7 @@ export default function Navbar() {
       <nav className="nav-links">
         {user?.role === 'ADMIN' ? <NavLink to="/admin" end>SHE Admin Dashboard</NavLink> : <NavLink to="/dashboard">Safety Dashboard</NavLink>}
         {user?.role === 'ADMIN' && <NavLink to="/admin/reports">SHE Reports</NavLink>}
+        {user?.role === 'ADMIN' && <NavLink to="/admin/data-monitoring">SHE Data Monitoring</NavLink>}
         {user?.role !== 'ADMIN' && <NavLink to="/results">Safety Results</NavLink>}
       </nav>
 
