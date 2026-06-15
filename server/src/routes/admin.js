@@ -21,7 +21,9 @@ function likeSearch(value) {
 async function pagedQuery({ selectSql, countSql, params, page, limit, offset }) {
   const countRows = await query(countSql, params);
   const total = Number(countRows[0]?.total || 0);
-  const rows = await query(`${selectSql} LIMIT ? OFFSET ?`, [...params, limit, offset]);
+  const safeLimit = Math.min(100, Math.max(1, Number.parseInt(limit, 10) || 25));
+  const safeOffset = Math.max(0, Number.parseInt(offset, 10) || 0);
+  const rows = await query(`${selectSql} LIMIT ${safeLimit} OFFSET ${safeOffset}`, params);
 
   return {
     records: rows,
@@ -227,7 +229,8 @@ router.get('/data-monitoring/videos', requireAuth, requireRole('ADMIN'), async (
                       WHEN v.video_url IS NULL OR v.video_url = '' THEN 'No URL'
                       WHEN v.video_url LIKE '%cloudinary.com%' THEN 'Cloudinary Video'
                       ELSE 'Local Upload'
-                    END AS videoUrlStatus
+                    END AS videoUrlStatus,
+                    v.created_at AS createdAt
                   FROM videos v
                   JOIN topics t ON t.id = v.topic_id
                   ${whereSql}

@@ -7,6 +7,7 @@ import VideoLesson from './pages/VideoLesson.jsx';
 import AdminDashboard from './pages/AdminDashboard.jsx';
 import AdminReports from './pages/AdminReports.jsx';
 import DataMonitoring from './pages/DataMonitoring.jsx';
+import DataMonitoringTablePage from './pages/dataMonitoring/DataMonitoringTablePage.jsx';
 import Results from './pages/Results.jsx';
 
 function getUser() {
@@ -90,6 +91,54 @@ export default function App() {
         element={
           <ProtectedRoute roles={['ADMIN']}>
             <DataMonitoring />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/data-monitoring/employees"
+        element={
+          <ProtectedRoute roles={['ADMIN']}>
+            <DataMonitoringTablePage type="employees" />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/data-monitoring/campaigns"
+        element={
+          <ProtectedRoute roles={['ADMIN']}>
+            <DataMonitoringTablePage type="campaigns" />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/data-monitoring/videos"
+        element={
+          <ProtectedRoute roles={['ADMIN']}>
+            <DataMonitoringTablePage type="videos" />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/data-monitoring/questions"
+        element={
+          <ProtectedRoute roles={['ADMIN']}>
+            <DataMonitoringTablePage type="questions" />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/data-monitoring/progress"
+        element={
+          <ProtectedRoute roles={['ADMIN']}>
+            <DataMonitoringTablePage type="progress" />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/data-monitoring/answers"
+        element={
+          <ProtectedRoute roles={['ADMIN']}>
+            <DataMonitoringTablePage type="answers" />
           </ProtectedRoute>
         }
       />

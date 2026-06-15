@@ -550,6 +550,25 @@ input:focus, textarea:focus, select:focus { border-color: var(--primary); box-sh
   grid-template-columns: repeat(4, minmax(0, 1fr));
   margin-top: 24px;
 }
+.data-monitoring-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 24px;
+}
+.data-monitoring-tabs a {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: white;
+  color: var(--primary);
+  font-weight: 800;
+  padding: 10px 14px;
+}
+.data-monitoring-tabs a.active {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: white;
+}
 .data-monitoring-filters {
   justify-content: flex-start;
   align-items: end;
