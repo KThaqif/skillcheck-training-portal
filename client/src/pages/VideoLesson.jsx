@@ -133,6 +133,8 @@ export default function VideoLesson() {
   }
 
   async function handleSubmitAnswer() {
+    if (!activeQuestion) return;
+
     if (result) {
       setAnsweredIds((prev) => new Set([...prev, activeQuestion.id]));
       setActiveQuestion(null);
@@ -140,6 +142,11 @@ export default function VideoLesson() {
       setResult(null);
       setQuizError('');
       setTimeout(() => videoRef.current?.play(), 250);
+      return;
+    }
+
+    if (!selected) {
+      setQuizError('Please select a safety answer.');
       return;
     }
 

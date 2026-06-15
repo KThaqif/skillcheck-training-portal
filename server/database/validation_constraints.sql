@@ -1,0 +1,38 @@
+USE skillcheck_db;
+
+ALTER TABLE users
+  MODIFY name VARCHAR(120) NOT NULL,
+  MODIFY email VARCHAR(190) NOT NULL,
+  MODIFY password VARCHAR(255) NOT NULL,
+  MODIFY department VARCHAR(120) NOT NULL,
+  MODIFY employee_id VARCHAR(80) NOT NULL;
+
+ALTER TABLE topics
+  MODIFY title VARCHAR(120) NOT NULL,
+  MODIFY description VARCHAR(1000),
+  MODIFY category VARCHAR(120) NOT NULL,
+  MODIFY thumbnail VARCHAR(500),
+  MODIFY deadline DATE NOT NULL;
+
+ALTER TABLE videos
+  MODIFY title VARCHAR(120) NOT NULL,
+  MODIFY description VARCHAR(1000),
+  MODIFY original_name VARCHAR(255),
+  MODIFY video_order INT NOT NULL DEFAULT 1,
+  MODIFY duration INT NOT NULL DEFAULT 0;
+
+ALTER TABLE questions
+  MODIFY timestamp_seconds INT NOT NULL,
+  MODIFY question_text VARCHAR(500) NOT NULL,
+  MODIFY correct_answer VARCHAR(200) NOT NULL;
+
+ALTER TABLE question_options
+  MODIFY option_text VARCHAR(200) NOT NULL;
+
+ALTER TABLE employee_answers
+  MODIFY selected_answer VARCHAR(200) NOT NULL;
+
+ALTER TABLE progress
+  MODIFY watched_percentage INT NOT NULL DEFAULT 0,
+  MODIFY last_watched_second INT NOT NULL DEFAULT 0,
+  MODIFY completed BOOLEAN NOT NULL DEFAULT FALSE;

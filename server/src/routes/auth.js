@@ -6,10 +6,10 @@ import { v4 as uuid } from 'uuid';
 import { getUserByEmail, mapUser, query } from '../db.js';
 import { requireAuth } from '../middleware/auth.js';
 import { getJwtSecret } from '../config.js';
+import { validateLoginInput, validateUserInput } from '../validation.js';
 
 const router = express.Router();
 const passwordHashRounds = 10;
-const allowedPublicRoles = new Set(['EMPLOYEE']);
 
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -18,10 +18,6 @@ const loginLimiter = rateLimit({
   legacyHeaders: false,
   message: { message: 'Too many login attempts. Please try again in 15 minutes.' }
 });
-
-function isValidEmail(email) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-}
 
 function isBcryptHash(value) {
   return /^\$2[aby]\$\d{2}\$/.test(value || '');
@@ -59,16 +55,11 @@ function createToken(user) {
 
 router.post('/login', loginLimiter, async (req, res) => {
   try {
-    const email = req.body?.email?.trim().toLowerCase();
-    const { password } = req.body || {};
-
-    if (!email || !password) {
-      return res.status(400).json({ message: 'Email and password are required.' });
+    const validation = validateLoginInput(req.body);
+    if (validation.message) {
+      return res.status(400).json({ message: validation.message });
     }
-
-    if (!isValidEmail(email)) {
-      return res.status(400).json({ message: 'Please enter a valid email address.' });
-    }
+    const { email, password } = validation.value;
 
     const user = await getUserByEmail(email);
 
@@ -97,32 +88,11 @@ router.post('/login', loginLimiter, async (req, res) => {
 
 router.post('/register', async (req, res) => {
   try {
-    const name = req.body?.name?.trim();
-    const email = req.body?.email?.trim().toLowerCase();
-    const employeeId = req.body?.employeeId?.trim();
-    const department = req.body?.department?.trim();
-    const role = String(req.body?.role || 'EMPLOYEE').trim().toUpperCase();
-    const { password } = req.body || {};
-
-    if (!name || !email || !employeeId || !department || !password) {
-      return res.status(400).json({ message: 'Name, email, employee ID, department, and password are required.' });
+    const validation = validateUserInput(req.body, { publicOnly: true });
+    if (validation.message) {
+      return res.status(400).json({ message: validation.message });
     }
-
-    if (name.length < 2) {
-      return res.status(400).json({ message: 'Name must be at least 2 characters.' });
-    }
-
-    if (!isValidEmail(email)) {
-      return res.status(400).json({ message: 'Please enter a valid email address.' });
-    }
-
-    if (password.length < 6) {
-      return res.status(400).json({ message: 'Password must be at least 6 characters.' });
-    }
-
-    if (!allowedPublicRoles.has(role)) {
-      return res.status(400).json({ message: 'Public registration is only available for employee accounts.' });
-    }
+    const { name, email, employeeId, department, role, password } = validation.value;
 
     const existingEmail = await getUserByEmail(email);
     if (existingEmail) {

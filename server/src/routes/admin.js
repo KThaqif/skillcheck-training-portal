@@ -3,14 +3,10 @@ import bcrypt from 'bcryptjs';
 import { v4 as uuid } from 'uuid';
 import { mapUser, query } from '../db.js';
 import { requireAuth, requireRole } from '../middleware/auth.js';
+import { validateUserInput } from '../validation.js';
 
 const router = express.Router();
 const passwordHashRounds = 10;
-const allowedEmployeeRoles = new Set(['ADMIN', 'EMPLOYEE', 'MANAGER']);
-
-function isValidEmail(email) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-}
 
 router.get('/reports', requireAuth, requireRole('ADMIN'), async (req, res, next) => {
   try {
@@ -79,28 +75,11 @@ router.get('/reports', requireAuth, requireRole('ADMIN'), async (req, res, next)
 
 router.post('/employees', requireAuth, requireRole('ADMIN'), async (req, res, next) => {
   try {
-    const name = req.body?.name?.trim();
-    const email = req.body?.email?.trim().toLowerCase();
-    const employeeId = req.body?.employeeId?.trim();
-    const department = req.body?.department?.trim();
-    const role = String(req.body?.role || 'EMPLOYEE').trim().toUpperCase();
-    const { password } = req.body || {};
-
-    if (!name || !email || !employeeId || !department || !password) {
-      return res.status(400).json({ message: 'Name, email, employee ID, department, and password are required.' });
+    const validation = validateUserInput(req.body);
+    if (validation.message) {
+      return res.status(400).json({ message: validation.message });
     }
-
-    if (!isValidEmail(email)) {
-      return res.status(400).json({ message: 'Please enter a valid email address.' });
-    }
-
-    if (password.length < 6) {
-      return res.status(400).json({ message: 'Password must be at least 6 characters.' });
-    }
-
-    if (!allowedEmployeeRoles.has(role)) {
-      return res.status(400).json({ message: 'Role must be ADMIN, EMPLOYEE, or MANAGER.' });
-    }
+    const { name, email, employeeId, department, role, password } = validation.value;
 
     const existingRows = await query(
       'SELECT id FROM users WHERE LOWER(email) = LOWER(?) OR employee_id = ? LIMIT 1',

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api, { API_BASE_URL } from '../api.js';
+import { LIMITS, isValidEmail } from '../validation.js';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -19,11 +20,30 @@ export default function Login() {
 
   async function handleSubmit(event) {
     event.preventDefault();
-    setLoading(true);
     setError('');
 
+    const cleanEmail = email.trim();
+    if (!cleanEmail) {
+      setError('Email is required.');
+      return;
+    }
+    if (!isValidEmail(cleanEmail)) {
+      setError('Please enter a valid email address.');
+      return;
+    }
+    if (!password) {
+      setError('Password is required.');
+      return;
+    }
+    if (password.length > LIMITS.passwordMax) {
+      setError(`Password must not exceed ${LIMITS.passwordMax} characters.`);
+      return;
+    }
+
+    setLoading(true);
+
     try {
-      const response = await api.post('/auth/login', { email, password });
+      const response = await api.post('/auth/login', { email: cleanEmail, password });
       localStorage.setItem('skillcheck_token', response.data.token);
       localStorage.setItem('skillcheck_user', JSON.stringify(response.data.user));
       navigate(response.data.user.role === 'ADMIN' ? '/admin' : '/dashboard', { replace: true });
@@ -56,11 +76,11 @@ export default function Login() {
           <h2>Login to your safety account</h2>
           <label>
             Email
-            <input value={email} onChange={(event) => setEmail(event.target.value)} type="email" placeholder="employee@company.com" />
+            <input value={email} onChange={(event) => setEmail(event.target.value)} type="email" placeholder="employee@company.com" required maxLength={LIMITS.email} />
           </label>
           <label>
             Password
-            <input value={password} onChange={(event) => setPassword(event.target.value)} type="password" placeholder="Password" />
+            <input value={password} onChange={(event) => setPassword(event.target.value)} type="password" placeholder="Password" required maxLength={LIMITS.passwordMax} />
           </label>
           {error && <div className="error-box">{error}</div>}
           <button className="primary-button" disabled={loading}>{loading ? 'Signing in...' : 'Login'}</button>

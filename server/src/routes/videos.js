@@ -8,6 +8,7 @@ import { fileURLToPath } from 'url';
 import { v4 as uuid } from 'uuid';
 import { mapQuestion, mapVideo, query } from '../db.js';
 import { requireAuth, requireRole } from '../middleware/auth.js';
+import { LIMITS, cleanString, parsePositiveInteger } from '../validation.js';
 
 const router = express.Router();
 const __filename = fileURLToPath(import.meta.url);
@@ -37,7 +38,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({
   storage,
-  limits: { fileSize: 500 * 1024 * 1024 },
+  limits: { fileSize: LIMITS.maxVideoSizeBytes },
   fileFilter: (req, file, cb) => {
     const extension = path.extname(file.originalname).toLowerCase();
     const allowedMimeTypes = allowedVideoTypes.get(extension);
@@ -58,7 +59,7 @@ function uploadVideoFile(req, res, next) {
 
     if (error instanceof multer.MulterError) {
       const message = error.code === 'LIMIT_FILE_SIZE'
-        ? 'Video file is too large. Maximum upload size is 500 MB.'
+        ? 'File size is too large. Please upload a smaller safety video. Maximum upload size is 500 MB.'
         : error.message;
       return res.status(400).json({ message });
     }
@@ -99,6 +100,7 @@ async function uploadToCloudinary(filePath, originalName) {
   } catch (error) {
     const uploadError = new Error('Video upload to Cloudinary failed. Please try again.');
     uploadError.statusCode = 502;
+    uploadError.publicMessage = uploadError.message;
     uploadError.cause = error;
     throw uploadError;
   }
@@ -128,15 +130,35 @@ router.get('/topic/:topicId', requireAuth, async (req, res, next) => {
 
 router.post('/topic/:topicId', requireAuth, requireRole('ADMIN'), uploadVideoFile, async (req, res, next) => {
   try {
-    const { title, description, order } = req.body;
+    const title = cleanString(req.body?.title);
+    const description = cleanString(req.body?.description);
+    const order = req.body?.order === undefined || req.body?.order === ''
+      ? null
+      : parsePositiveInteger(req.body.order);
     const topicRows = await query('SELECT id FROM topics WHERE id = ? LIMIT 1', [req.params.topicId]);
 
     if (topicRows.length === 0) {
       return res.status(404).json({ message: 'Topic not found.' });
     }
 
-    if (!title || !req.file) {
-      return res.status(400).json({ message: 'Video title and video file are required.' });
+    if (!title) {
+      return res.status(400).json({ message: 'Safety video title is required.' });
+    }
+
+    if (title.length > LIMITS.videoTitle) {
+      return res.status(400).json({ message: `Safety video title must not exceed ${LIMITS.videoTitle} characters.` });
+    }
+
+    if (description.length > LIMITS.videoDescription) {
+      return res.status(400).json({ message: `Safety video description must not exceed ${LIMITS.videoDescription} characters.` });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ message: 'Safety video file is required.' });
+    }
+
+    if (req.body?.order !== undefined && req.body?.order !== '' && order === null) {
+      return res.status(400).json({ message: 'Module order / lesson sequence must be a positive number.' });
     }
 
     requireCloudinaryConfig();
@@ -148,8 +170,8 @@ router.post('/topic/:topicId', requireAuth, requireRole('ADMIN'), uploadVideoFil
       id: uuid(),
       topicId: req.params.topicId,
       title,
-      description: description || '',
-      order: Number(order) || Number(countRows[0].count) + 1,
+      description,
+      order: order || Number(countRows[0].count) + 1,
       videoUrl: cloudinaryVideo.secure_url,
       originalName: req.file.originalname,
       duration,

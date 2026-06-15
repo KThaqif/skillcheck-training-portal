@@ -2,6 +2,7 @@ import express from 'express';
 import { v4 as uuid } from 'uuid';
 import { mapQuestion, pool, query } from '../db.js';
 import { requireAuth, requireRole } from '../middleware/auth.js';
+import { LIMITS, cleanString } from '../validation.js';
 
 const router = express.Router();
 
@@ -40,28 +41,40 @@ router.post('/video/:videoId', requireAuth, requireRole('ADMIN'), async (req, re
     }
 
     const timestampSeconds = Number(timestamp);
-    const cleanedQuestion = questionText?.trim();
-    const cleanedOptions = Array.isArray(options) ? options.map((option) => String(option).trim()) : [];
+    const cleanedQuestion = cleanString(questionText);
+    const cleanedOptions = Array.isArray(options) ? options.map((option) => cleanString(option)) : [];
     const hasSelectedIndex = correctOptionIndex !== undefined && correctOptionIndex !== '';
     const selectedIndex = hasSelectedIndex ? Number(correctOptionIndex) : -1;
     const selectedCorrectAnswer = Number.isInteger(selectedIndex) && selectedIndex >= 0 && selectedIndex < cleanedOptions.length
       ? cleanedOptions[selectedIndex]
-      : String(correctAnswer || '').trim();
+      : cleanString(correctAnswer);
 
     if (!Number.isInteger(timestampSeconds) || timestampSeconds <= 0) {
       return res.status(400).json({ message: 'Pause time must be a whole number greater than 0 seconds.' });
     }
 
     if (!cleanedQuestion) {
-      return res.status(400).json({ message: 'Question cannot be empty.' });
+      return res.status(400).json({ message: 'Question text is required.' });
+    }
+
+    if (cleanedQuestion.length > LIMITS.questionText) {
+      return res.status(400).json({ message: `Question text must not exceed ${LIMITS.questionText} characters.` });
     }
 
     if (!Array.isArray(options) || cleanedOptions.length !== 4 || cleanedOptions.some((option) => !option)) {
       return res.status(400).json({ message: 'Option 1, Option 2, Option 3, and Option 4 are required.' });
     }
 
+    if (cleanedOptions.some((option) => option.length > LIMITS.optionText)) {
+      return res.status(400).json({ message: `Each answer option must not exceed ${LIMITS.optionText} characters.` });
+    }
+
+    if (new Set(cleanedOptions.map((option) => option.toLowerCase())).size !== cleanedOptions.length) {
+      return res.status(400).json({ message: 'Answer options must be unique.' });
+    }
+
     if (!selectedCorrectAnswer) {
-      return res.status(400).json({ message: 'Please select the correct option.' });
+      return res.status(400).json({ message: 'Please select the correct safety answer.' });
     }
 
     if (!cleanedOptions.includes(selectedCorrectAnswer)) {

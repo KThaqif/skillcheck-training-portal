@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Navbar from '../components/Navbar.jsx';
 import api, { API_BASE_URL } from '../api.js';
+import { LIMITS, formatFileSize, isValidUrlOrLocalPath, todayString } from '../validation.js';
 
 function resolveVideoUrl(url) {
   if (!url) return '';
@@ -17,18 +18,30 @@ function formatPauseTime(totalSeconds) {
 
 const allowedVideoExtensions = ['mp4', 'webm', 'mov'];
 const allowedVideoMimeTypes = ['video/mp4', 'video/webm', 'video/quicktime', 'video/x-quicktime', 'video/mov'];
-const safetyCategories = [
-  'PPE Compliance',
-  'Forklift and Vehicle Movement Safety',
-  'Fire and Emergency Response',
-  'Machine Operation Safety',
-  'Chemical Handling Awareness',
-  'Hazard Identification',
-  'Slips, Trips and Falls Prevention',
-  'Near-Miss Reporting',
-  'Accident Prevention',
-  'Emergency Assembly Point Procedure'
-];
+function cleanTopicForm(form) {
+  return {
+    title: form.title.trim(),
+    category: form.category.trim(),
+    description: form.description.trim(),
+    thumbnailUrl: form.thumbnailUrl.trim(),
+    startDate: form.startDate,
+    deadline: form.deadline
+  };
+}
+
+function validateTopicForm(form) {
+  const cleaned = cleanTopicForm(form);
+
+  if (!cleaned.title) return 'Safety campaign title is required.';
+  if (cleaned.title.length > LIMITS.topicTitle) return `Safety campaign title must not exceed ${LIMITS.topicTitle} characters.`;
+  if (!cleaned.category) return 'Safety category is required.';
+  if (cleaned.category.length > LIMITS.category) return `Safety category must not exceed ${LIMITS.category} characters.`;
+  if (cleaned.description.length > LIMITS.topicDescription) return `Safety campaign description must not exceed ${LIMITS.topicDescription} characters.`;
+  if (!isValidUrlOrLocalPath(cleaned.thumbnailUrl)) return 'Thumbnail URL must be a valid URL or local path.';
+  if (!cleaned.deadline) return 'Campaign deadline is required.';
+  if (cleaned.deadline < todayString()) return 'Campaign deadline cannot be in the past.';
+  return '';
+}
 
 export default function AdminDashboard() {
   const questionVideoRef = useRef(null);
@@ -49,11 +62,11 @@ export default function AdminDashboard() {
   });
   const [topicForm, setTopicForm] = useState({
     title: '',
-    category: 'PPE Compliance',
+    category: '',
     description: '',
     thumbnailUrl: '',
-    startDate: new Date().toISOString().slice(0, 10),
-    deadline: '2026-06-30'
+    startDate: todayString(),
+    deadline: todayString()
   });
   const [videoForm, setVideoForm] = useState({ title: '', description: '', order: 1, file: null });
   const [questionForm, setQuestionForm] = useState({
@@ -91,11 +104,23 @@ export default function AdminDashboard() {
 
   async function createTopic(event) {
     event.preventDefault();
-    await api.post('/topics', topicForm);
-    setMessageType('success');
-    setMessage('Safety campaign created as draft. Add safety videos and launch when ready.');
-    setTopicForm({ ...topicForm, title: '', description: '', thumbnailUrl: '' });
-    loadData();
+    const validationMessage = validateTopicForm(topicForm);
+    if (validationMessage) {
+      setMessageType('error');
+      setMessage(validationMessage);
+      return;
+    }
+
+    try {
+      await api.post('/topics', cleanTopicForm(topicForm));
+      setMessageType('success');
+      setMessage('Safety campaign created as draft. Add safety videos and launch when ready.');
+      setTopicForm({ ...topicForm, title: '', description: '', thumbnailUrl: '' });
+      loadData();
+    } catch (error) {
+      setMessageType('error');
+      setMessage(error.response?.data?.message || 'Unable to create safety campaign.');
+    }
   }
 
   async function launchTopic(topicId) {
@@ -127,7 +152,14 @@ export default function AdminDashboard() {
     if (!editingTopicId) return;
 
     try {
-      await api.patch(`/topics/${editingTopicId}`, editTopicForm);
+      const validationMessage = validateTopicForm(editTopicForm);
+      if (validationMessage) {
+        setMessageType('error');
+        setMessage(validationMessage);
+        return;
+      }
+
+      await api.patch(`/topics/${editingTopicId}`, cleanTopicForm(editTopicForm));
       setMessageType('success');
       setMessage('Safety campaign updated successfully.');
       cancelEditTopic();
@@ -163,23 +195,63 @@ export default function AdminDashboard() {
 
   async function uploadVideo(event) {
     event.preventDefault();
-    if (!selectedTopicId || !videoForm.file) {
+    const title = videoForm.title.trim();
+    const description = videoForm.description.trim();
+    const order = Number(videoForm.order);
+
+    if (!selectedTopicId) {
       setMessageType('error');
-      setMessage('Please choose a safety campaign and video file.');
+      setMessage('Please choose a safety campaign.');
+      return;
+    }
+
+    if (!title) {
+      setMessageType('error');
+      setMessage('Safety video title is required.');
+      return;
+    }
+
+    if (title.length > LIMITS.videoTitle) {
+      setMessageType('error');
+      setMessage(`Safety video title must not exceed ${LIMITS.videoTitle} characters.`);
+      return;
+    }
+
+    if (description.length > LIMITS.videoDescription) {
+      setMessageType('error');
+      setMessage(`Safety video description must not exceed ${LIMITS.videoDescription} characters.`);
+      return;
+    }
+
+    if (!Number.isInteger(order) || order <= 0) {
+      setMessageType('error');
+      setMessage('Module order / lesson sequence must be a positive number.');
+      return;
+    }
+
+    if (!videoForm.file) {
+      setMessageType('error');
+      setMessage('Safety video file is required.');
       return;
     }
 
     const extension = videoForm.file.name.split('.').pop()?.toLowerCase();
     if (!allowedVideoExtensions.includes(extension) || (videoForm.file.type && !allowedVideoMimeTypes.includes(videoForm.file.type))) {
       setMessageType('error');
-      setMessage('Only MP4, WebM, and MOV video files are allowed.');
+      setMessage('Video file must be MP4, WEBM, or MOV.');
+      return;
+    }
+
+    if (videoForm.file.size > LIMITS.maxVideoSizeBytes) {
+      setMessageType('error');
+      setMessage(`File size is too large. Please upload a smaller safety video. Maximum size is ${formatFileSize(LIMITS.maxVideoSizeBytes)}.`);
       return;
     }
 
     const formData = new FormData();
-    formData.append('title', videoForm.title);
-    formData.append('description', videoForm.description);
-    formData.append('order', videoForm.order);
+    formData.append('title', title);
+    formData.append('description', description);
+    formData.append('order', order);
     formData.append('video', videoForm.file);
 
     try {
@@ -244,9 +316,27 @@ export default function AdminDashboard() {
       return;
     }
 
+    if (questionForm.questionText.trim().length > LIMITS.questionText) {
+      setMessageType('error');
+      setMessage(`Question text must not exceed ${LIMITS.questionText} characters.`);
+      return;
+    }
+
     if (options.some((option) => !option)) {
       setMessageType('error');
       setMessage('Please fill in all four answer options.');
+      return;
+    }
+
+    if (options.some((option) => option.length > LIMITS.optionText)) {
+      setMessageType('error');
+      setMessage(`Each answer option must not exceed ${LIMITS.optionText} characters.`);
+      return;
+    }
+
+    if (new Set(options.map((option) => option.toLowerCase())).size !== options.length) {
+      setMessageType('error');
+      setMessage('Answer options must be unique.');
       return;
     }
 
@@ -331,15 +421,12 @@ export default function AdminDashboard() {
             <h2>1. Create Safety Awareness Campaign</h2>
             <p className="section-copy">Use campaigns to spread workplace safety awareness, reinforce safety compliance, and highlight hazard controls for employees.</p>
             <form className="form-grid" onSubmit={createTopic}>
-              <label>Safety Campaign Title<input value={topicForm.title} onChange={(e) => setTopicForm({ ...topicForm, title: e.target.value })} required /></label>
-              <label>Safety Category<input list="safety-categories" value={topicForm.category} onChange={(e) => setTopicForm({ ...topicForm, category: e.target.value })} required /></label>
-              <datalist id="safety-categories">
-                {safetyCategories.map((category) => <option key={category} value={category} />)}
-              </datalist>
+              <label>Safety Campaign Title<input value={topicForm.title} onChange={(e) => setTopicForm({ ...topicForm, title: e.target.value })} required maxLength={LIMITS.topicTitle} /></label>
+              <label>Safety Category<input value={topicForm.category} onChange={(e) => setTopicForm({ ...topicForm, category: e.target.value })} required maxLength={LIMITS.category} /></label>
               <label>Start Date<input type="date" value={topicForm.startDate} onChange={(e) => setTopicForm({ ...topicForm, startDate: e.target.value })} /></label>
-              <label>Campaign Deadline<input type="date" value={topicForm.deadline} onChange={(e) => setTopicForm({ ...topicForm, deadline: e.target.value })} required /></label>
-              <label className="span-2">Safety Campaign Thumbnail URL<input value={topicForm.thumbnailUrl} onChange={(e) => setTopicForm({ ...topicForm, thumbnailUrl: e.target.value })} /></label>
-              <label className="span-2">Safety Campaign Description<textarea value={topicForm.description} onChange={(e) => setTopicForm({ ...topicForm, description: e.target.value })} /></label>
+              <label>Campaign Deadline<input type="date" min={todayString()} value={topicForm.deadline} onChange={(e) => setTopicForm({ ...topicForm, deadline: e.target.value })} required /></label>
+              <label className="span-2">Safety Campaign Thumbnail URL<input value={topicForm.thumbnailUrl} onChange={(e) => setTopicForm({ ...topicForm, thumbnailUrl: e.target.value })} maxLength={LIMITS.thumbnail} /></label>
+              <label className="span-2">Safety Campaign Description<textarea value={topicForm.description} onChange={(e) => setTopicForm({ ...topicForm, description: e.target.value })} maxLength={LIMITS.topicDescription} /></label>
               <button className="primary-button">Create Safety Campaign</button>
             </form>
           </section>
@@ -353,9 +440,9 @@ export default function AdminDashboard() {
                   {topics.map((topic) => <option key={topic.id} value={topic.id}>{topic.title}</option>)}
                 </select>
               </label>
-              <label>Safety Video Title<input value={videoForm.title} onChange={(e) => setVideoForm({ ...videoForm, title: e.target.value })} required /></label>
-              <label>Module Order / Lesson Sequence<input type="number" value={videoForm.order} onChange={(e) => setVideoForm({ ...videoForm, order: e.target.value })} /></label>
-              <label className="span-2">Safety Video Description<textarea value={videoForm.description} onChange={(e) => setVideoForm({ ...videoForm, description: e.target.value })} /></label>
+              <label>Safety Video Title<input value={videoForm.title} onChange={(e) => setVideoForm({ ...videoForm, title: e.target.value })} required maxLength={LIMITS.videoTitle} /></label>
+              <label>Module Order / Lesson Sequence<input type="number" min="1" step="1" value={videoForm.order} onChange={(e) => setVideoForm({ ...videoForm, order: e.target.value })} required /></label>
+              <label className="span-2">Safety Video Description<textarea value={videoForm.description} onChange={(e) => setVideoForm({ ...videoForm, description: e.target.value })} maxLength={LIMITS.videoDescription} /></label>
               <label className="span-2">Safety Video File<input type="file" accept=".mp4,.webm,.mov,video/mp4,video/webm,video/quicktime" onChange={(e) => setVideoForm({ ...videoForm, file: e.target.files[0] })} required /></label>
               <button className="primary-button">Upload Safety Video</button>
             </form>
@@ -386,11 +473,11 @@ export default function AdminDashboard() {
                 <small>Example: 1 minute 30 seconds means the safety checkpoint appears at 01:30.</small>
                 <strong>Safety checkpoint will appear at: {hasPausePreview ? formatPauseTime(pauseTotalSeconds) : '--:--'}</strong>
               </div>
-              <label className="span-2">Safety Understanding Question<textarea value={questionForm.questionText} onChange={(e) => setQuestionForm({ ...questionForm, questionText: e.target.value })} required /></label>
-              <label>Answer Option 1<input value={questionForm.option1} onChange={(e) => setQuestionForm({ ...questionForm, option1: e.target.value })} required /></label>
-              <label>Answer Option 2<input value={questionForm.option2} onChange={(e) => setQuestionForm({ ...questionForm, option2: e.target.value })} required /></label>
-              <label>Answer Option 3<input value={questionForm.option3} onChange={(e) => setQuestionForm({ ...questionForm, option3: e.target.value })} required /></label>
-              <label>Answer Option 4<input value={questionForm.option4} onChange={(e) => setQuestionForm({ ...questionForm, option4: e.target.value })} required /></label>
+              <label className="span-2">Safety Understanding Question<textarea value={questionForm.questionText} onChange={(e) => setQuestionForm({ ...questionForm, questionText: e.target.value })} required maxLength={LIMITS.questionText} /></label>
+              <label>Answer Option 1<input value={questionForm.option1} onChange={(e) => setQuestionForm({ ...questionForm, option1: e.target.value })} required maxLength={LIMITS.optionText} /></label>
+              <label>Answer Option 2<input value={questionForm.option2} onChange={(e) => setQuestionForm({ ...questionForm, option2: e.target.value })} required maxLength={LIMITS.optionText} /></label>
+              <label>Answer Option 3<input value={questionForm.option3} onChange={(e) => setQuestionForm({ ...questionForm, option3: e.target.value })} required maxLength={LIMITS.optionText} /></label>
+              <label>Answer Option 4<input value={questionForm.option4} onChange={(e) => setQuestionForm({ ...questionForm, option4: e.target.value })} required maxLength={LIMITS.optionText} /></label>
               <label className="span-2">Select Correct Safety Answer
                 <select value={questionForm.correctOption} onChange={(e) => setQuestionForm({ ...questionForm, correctOption: e.target.value })} disabled={!questionOptionsReady} required>
                   <option value="">{questionOptionsReady ? 'Choose correct safety answer' : 'Enter all answer options first'}</option>
@@ -412,12 +499,12 @@ export default function AdminDashboard() {
                 <div className="admin-topic-row" key={topic.id}>
                   {editingTopicId === topic.id ? (
                     <form className="form-grid topic-edit-form" onSubmit={saveTopicEdit}>
-                      <label>Safety Campaign Title<input value={editTopicForm.title} onChange={(e) => setEditTopicForm({ ...editTopicForm, title: e.target.value })} required /></label>
-                      <label>Safety Category<input list="safety-categories" value={editTopicForm.category} onChange={(e) => setEditTopicForm({ ...editTopicForm, category: e.target.value })} required /></label>
+                      <label>Safety Campaign Title<input value={editTopicForm.title} onChange={(e) => setEditTopicForm({ ...editTopicForm, title: e.target.value })} required maxLength={LIMITS.topicTitle} /></label>
+                      <label>Safety Category<input value={editTopicForm.category} onChange={(e) => setEditTopicForm({ ...editTopicForm, category: e.target.value })} required maxLength={LIMITS.category} /></label>
                       <label>Start Date<input type="date" value={editTopicForm.startDate} onChange={(e) => setEditTopicForm({ ...editTopicForm, startDate: e.target.value })} /></label>
-                      <label>Campaign Deadline<input type="date" value={editTopicForm.deadline} onChange={(e) => setEditTopicForm({ ...editTopicForm, deadline: e.target.value })} required /></label>
-                      <label className="span-2">Safety Campaign Thumbnail URL<input value={editTopicForm.thumbnailUrl} onChange={(e) => setEditTopicForm({ ...editTopicForm, thumbnailUrl: e.target.value })} /></label>
-                      <label className="span-2">Safety Campaign Description<textarea value={editTopicForm.description} onChange={(e) => setEditTopicForm({ ...editTopicForm, description: e.target.value })} /></label>
+                      <label>Campaign Deadline<input type="date" min={todayString()} value={editTopicForm.deadline} onChange={(e) => setEditTopicForm({ ...editTopicForm, deadline: e.target.value })} required /></label>
+                      <label className="span-2">Safety Campaign Thumbnail URL<input value={editTopicForm.thumbnailUrl} onChange={(e) => setEditTopicForm({ ...editTopicForm, thumbnailUrl: e.target.value })} maxLength={LIMITS.thumbnail} /></label>
+                      <label className="span-2">Safety Campaign Description<textarea value={editTopicForm.description} onChange={(e) => setEditTopicForm({ ...editTopicForm, description: e.target.value })} maxLength={LIMITS.topicDescription} /></label>
                       <div className="span-2 edit-actions">
                         <button className="primary-button">Save Changes</button>
                         <button className="outline-button" type="button" onClick={cancelEditTopic}>Cancel</button>

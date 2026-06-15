@@ -2,6 +2,7 @@ import express from 'express';
 import { v4 as uuid } from 'uuid';
 import { mapTopic, mapVideo, query } from '../db.js';
 import { requireAuth, requireRole } from '../middleware/auth.js';
+import { validateTopicInput } from '../validation.js';
 
 const router = express.Router();
 
@@ -109,19 +110,19 @@ router.get('/:topicId', requireAuth, async (req, res, next) => {
 
 router.post('/', requireAuth, requireRole('ADMIN'), async (req, res, next) => {
   try {
-    const { title, category, description, thumbnailUrl, startDate, deadline } = req.body;
-
-    if (!title || !category || !deadline) {
-      return res.status(400).json({ message: 'Title, category, and deadline are required.' });
+    const validation = validateTopicInput(req.body);
+    if (validation.message) {
+      return res.status(400).json({ message: validation.message });
     }
+    const { title, category, description, thumbnailUrl, startDate, deadline } = validation.value;
 
     const topic = {
       id: uuid(),
       title,
       category,
-      description: description || '',
-      thumbnailUrl: thumbnailUrl || '',
-      startDate: startDate || new Date().toISOString().slice(0, 10),
+      description,
+      thumbnailUrl,
+      startDate,
       deadline,
       status: 'DRAFT',
       launchedAt: null,
@@ -144,11 +145,11 @@ router.post('/', requireAuth, requireRole('ADMIN'), async (req, res, next) => {
 
 router.patch('/:topicId', requireAuth, requireRole('ADMIN'), async (req, res, next) => {
   try {
-    const { title, category, description, thumbnailUrl, startDate, deadline } = req.body;
-
-    if (!title || !category || !deadline) {
-      return res.status(400).json({ message: 'Title, category, and deadline are required.' });
+    const validation = validateTopicInput(req.body);
+    if (validation.message) {
+      return res.status(400).json({ message: validation.message });
     }
+    const { title, category, description, thumbnailUrl, startDate, deadline } = validation.value;
 
     const result = await query(
       `UPDATE topics
@@ -156,10 +157,10 @@ router.patch('/:topicId', requireAuth, requireRole('ADMIN'), async (req, res, ne
        WHERE id = ?`,
       [
         title,
-        description || '',
+        description,
         category,
-        thumbnailUrl || '',
-        startDate || new Date().toISOString().slice(0, 10),
+        thumbnailUrl,
+        startDate,
         deadline,
         req.params.topicId
       ]

@@ -76,7 +76,12 @@ app.use('/api/admin', adminRoutes);
 
 app.use((err, req, res, next) => {
   console.error(err);
-  res.status(err.statusCode || 500).json({ message: err.message || 'Server error.' });
+  const status = err.statusCode || 500;
+  const message = err.publicMessage
+    || (status >= 500
+    ? 'Server error. Please try again later.'
+    : err.message || 'Request failed.');
+  res.status(status).json({ message });
 });
 
 try {

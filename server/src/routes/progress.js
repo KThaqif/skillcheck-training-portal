@@ -2,6 +2,7 @@ import express from 'express';
 import { v4 as uuid } from 'uuid';
 import { mapProgress, query } from '../db.js';
 import { requireAuth } from '../middleware/auth.js';
+import { LIMITS, cleanString, parseNonNegativeInteger } from '../validation.js';
 
 const router = express.Router();
 
@@ -42,10 +43,15 @@ router.get('/topic/:topicId', requireAuth, async (req, res, next) => {
 
 router.post('/answer', requireAuth, async (req, res, next) => {
   try {
-    const { questionId, selectedAnswer } = req.body;
+    const questionId = cleanString(req.body?.questionId);
+    const selectedAnswer = cleanString(req.body?.selectedAnswer);
 
-    if (!questionId || selectedAnswer === undefined) {
+    if (!questionId || !selectedAnswer) {
       return res.status(400).json({ message: 'Question ID and selected answer are required.' });
+    }
+
+    if (selectedAnswer.length > LIMITS.answerText) {
+      return res.status(400).json({ message: `Selected answer must not exceed ${LIMITS.answerText} characters.` });
     }
 
     const questionRows = await query('SELECT * FROM questions WHERE id = ? LIMIT 1', [questionId]);
@@ -106,10 +112,21 @@ router.post('/answer', requireAuth, async (req, res, next) => {
 
 router.post('/video', requireAuth, async (req, res, next) => {
   try {
-    const { topicId, videoId, watchedSeconds, completed } = req.body;
+    const topicId = cleanString(req.body?.topicId);
+    const videoId = cleanString(req.body?.videoId);
+    const seconds = parseNonNegativeInteger(req.body?.watchedSeconds);
+    const completed = req.body?.completed;
 
     if (!topicId || !videoId) {
       return res.status(400).json({ message: 'Topic ID and video ID are required.' });
+    }
+
+    if (seconds === null) {
+      return res.status(400).json({ message: 'Last watched second cannot be negative.' });
+    }
+
+    if (typeof completed !== 'boolean') {
+      return res.status(400).json({ message: 'Completion status must be valid.' });
     }
 
     const videoRows = await query(
@@ -121,8 +138,11 @@ router.post('/video', requireAuth, async (req, res, next) => {
       return res.status(404).json({ message: 'Video not found for this topic.' });
     }
 
-    const seconds = Number(watchedSeconds) || 0;
     const duration = Number(videoRows[0].duration) || 0;
+    if (completed && duration > 0 && seconds < duration - 1) {
+      return res.status(400).json({ message: 'Safety video cannot be completed before it has been watched.' });
+    }
+
     const watchedPercentage = duration > 0 ? Math.min(100, Math.round((seconds / duration) * 100)) : 0;
     const existingRows = await query(
       'SELECT * FROM progress WHERE user_id = ? AND topic_id = ? AND video_id = ? LIMIT 1',

@@ -10,17 +10,17 @@ CREATE TABLE IF NOT EXISTS users (
   email VARCHAR(190) NOT NULL UNIQUE,
   password VARCHAR(255) NOT NULL,
   role ENUM('ADMIN', 'EMPLOYEE', 'MANAGER') NOT NULL DEFAULT 'EMPLOYEE',
-  department VARCHAR(120),
-  employee_id VARCHAR(80) UNIQUE,
+  department VARCHAR(120) NOT NULL,
+  employee_id VARCHAR(80) NOT NULL UNIQUE,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS topics (
   id VARCHAR(36) PRIMARY KEY,
-  title VARCHAR(200) NOT NULL,
-  description TEXT,
+  title VARCHAR(120) NOT NULL,
+  description VARCHAR(1000),
   category VARCHAR(120) NOT NULL,
-  thumbnail TEXT,
+  thumbnail VARCHAR(500),
   start_date DATE,
   deadline DATE NOT NULL,
   status ENUM('DRAFT', 'LAUNCHED', 'ARCHIVED') NOT NULL DEFAULT 'DRAFT',
@@ -33,8 +33,8 @@ CREATE TABLE IF NOT EXISTS topics (
 CREATE TABLE IF NOT EXISTS videos (
   id VARCHAR(36) PRIMARY KEY,
   topic_id VARCHAR(36) NOT NULL,
-  title VARCHAR(200) NOT NULL,
-  description TEXT,
+  title VARCHAR(120) NOT NULL,
+  description VARCHAR(1000),
   video_url TEXT NOT NULL,
   original_name VARCHAR(255),
   video_order INT NOT NULL DEFAULT 1,
@@ -47,9 +47,9 @@ CREATE TABLE IF NOT EXISTS questions (
   id VARCHAR(36) PRIMARY KEY,
   video_id VARCHAR(36) NOT NULL,
   timestamp_seconds INT NOT NULL,
-  question_text TEXT NOT NULL,
+  question_text VARCHAR(500) NOT NULL,
   question_type VARCHAR(50) NOT NULL DEFAULT 'MULTIPLE_CHOICE',
-  correct_answer TEXT NOT NULL,
+  correct_answer VARCHAR(200) NOT NULL,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT fk_questions_video FOREIGN KEY (video_id) REFERENCES videos(id) ON DELETE CASCADE
 );
@@ -57,7 +57,7 @@ CREATE TABLE IF NOT EXISTS questions (
 CREATE TABLE IF NOT EXISTS question_options (
   id VARCHAR(36) PRIMARY KEY,
   question_id VARCHAR(36) NOT NULL,
-  option_text TEXT NOT NULL,
+  option_text VARCHAR(200) NOT NULL,
   is_correct BOOLEAN NOT NULL DEFAULT FALSE,
   CONSTRAINT fk_question_options_question FOREIGN KEY (question_id) REFERENCES questions(id) ON DELETE CASCADE
 );
@@ -66,7 +66,7 @@ CREATE TABLE IF NOT EXISTS employee_answers (
   id VARCHAR(36) PRIMARY KEY,
   user_id VARCHAR(36) NOT NULL,
   question_id VARCHAR(36) NOT NULL,
-  selected_answer TEXT NOT NULL,
+  selected_answer VARCHAR(200) NOT NULL,
   is_correct BOOLEAN NOT NULL DEFAULT FALSE,
   answered_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   UNIQUE KEY uq_employee_answer (user_id, question_id),
